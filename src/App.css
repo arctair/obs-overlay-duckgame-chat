@@ -1,28 +1,38 @@
-.App {
-  text-align: center;
+html, body, #root, .App {
+  height: 100%;
 }
-
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+.chat-msg {
+  font-family: DuckGame;
+  margin: 2px;
 }
-
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
+.chat-msg>span {
+  padding-left: 1em;
+  display: inline-block;
+  position: relative;
+}
+.chat-msg img {
+  position: absolute;
+  left: -0.75em;
+  top: -0.75em;
+  width: 2em;
+  height: 2em;
+}
+.chat-msg span.white {
+  background-color: #FFFFFF;
+}
+.chat-msg span.grey {
+  background-color: #7D7D7D;
+}
+.chat-msg span.yellow {
+  background-color: #F7E05A;
+}
+.chat-msg span.brown {
+  background-color: #CD6B1D;
+}
+.chat-dn {
   color: white;
 }
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@font-face {
+  font-family: DuckGame;
+  src: url(DuckGame.ttf);
 }
