@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
-import config from './config'
 import './App.css'
 import Message from './Message'
 
-const { channel } = config
+const channelMatch = RegExp('\\?channel=(.*)$').exec(window.location.href)
+const channel = channelMatch && channelMatch[1]
 
 const overflow = element => element.offsetHeight < element.scrollHeight
 const setConnected = (connected, setState) => () =>
@@ -29,15 +29,17 @@ class App extends Component {
     }))
   }
   componentDidMount() {
-    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443', 'irc')
-    ws.onopen = () => {
-      ws.send('PASS foobar')
-      ws.send('NICK justinfan123')
-      ws.send(`JOIN #${channel}`)
-      setConnected(true, this.setState.bind(this))()
+    if (channel) {
+      const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443', 'irc')
+      ws.onopen = () => {
+        ws.send('PASS foobar')
+        ws.send('NICK justinfan123')
+        ws.send(`JOIN #${channel}`)
+        setConnected(true, this.setState.bind(this))()
+      }
+      ws.onmessage = e => decomposeEvent(e).map(this.handleMessage)
+      ws.onclose = setConnected(false, this.setState.bind(this))
     }
-    ws.onmessage = e => decomposeEvent(e).map(this.handleMessage)
-    ws.onclose = setConnected(false, this.setState.bind(this))
   }
   componentDidUpdate() {
     if (overflow(this.element)) {
@@ -49,6 +51,14 @@ class App extends Component {
   }
   render() {
     const { connected, messages } = this.state
+    if (!channel) {
+      return (
+        <div className='App'>
+          <p>Please specify a channel in the URL parameters</p>
+          <p>For example, <a href='?channel=krispykitty'>{window.location.href}?channel=krispykitty</a></p>
+        </div>
+      )
+    }
     return (
       <div className='App' ref={(element) => {this.element = element}}>
         {messages.map(([displayName, message], i) => ({ displayName, message, i })).map(Message)}
