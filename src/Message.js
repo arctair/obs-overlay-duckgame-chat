@@ -9,7 +9,7 @@ const Message = ({ displayName, message, i }) => {
   const color = colors[hashString(displayName) % 4]
   return (
     <div className='chat-msg' key={i}>
-      <span className={`transparent ${color}`}>
+      <span className={`${color}`}>
         <img src={hatFrom(displayName.toLowerCase())} alt=''/>
         <span className='chat-dn'>{displayName}: </span>
         {message}

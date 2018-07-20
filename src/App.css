@@ -18,16 +18,16 @@ html, body, #root, .App {
   height: 2em;
 }
 .chat-msg span.white {
-  background-color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.7);
 }
 .chat-msg span.grey {
-  background-color: #7D7D7D;
+  background-color: rgba(125, 125, 125, 0.7);
 }
 .chat-msg span.yellow {
-  background-color: #F7E05A;
+  background-color: rgba(247, 224, 90, 0.7);
 }
 .chat-msg span.brown {
-  background-color: #CD6B1D;
+  background-color: rgba(205, 107, 29, 0.7);
 }
 .chat-dn {
   color: white;
