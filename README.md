@@ -7,13 +7,10 @@ Node v8.11.3
 
 ## Config
 Copy config.js.template to config.js. Fill out `channel` with your channel name.  
-Get an oauth token from https://twitchapps.com/tmi/ then put it in config.js's `oauth` field.  
 Grab all the duck game hats in PNG form and drop them into the src/hats holder.  
 
 ## Build and serve
-tmi.js is broken, so `cp -r node_modules/tmi.js src/`  
-Then go fix line 108 in src/tmi.js/lib/utils.js by changing references to `chrome` to `window.chrome`  
-After that, go to line 2 in src/App.js and change `import tmi from 'tmi.js'` to `import tmi from './tmi.js'`  
-Now `npm run build`.  
+`npm i`  
+`npm run build`  
 Now you need to serve the static files in `build` then connect an OBS browser source to your server.  
 You can serve the files locally with `npx serve -s build` if you previously installed `serve` with `npm i -g serve`  

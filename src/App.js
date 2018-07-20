@@ -1,21 +1,20 @@
 import React, { Component } from 'react';
-import tmi from 'tmi.js'
 import config from './config'
 import './App.css'
 import Message from './Message'
 
-const { channel, oauth } = config
-const opts = {
-  identity: {
-    username: 'my_bot',
-    password: `oauth:${oauth}`,
-  },
-  channels: [ channel ]
-}
+const { channel } = config
 
 const overflow = element => element.offsetHeight < element.scrollHeight
 const setConnected = (connected, setState) => () =>
   setState(state => ({ ...state, connected }))
+const messagePattern = new RegExp(`:(.*?)!(.*?)@(.*?) PRIVMSG (#${channel}) :(.*)`)
+const decomposeEvent = e => e.data
+  .split('\r\n')
+  .map(m => { console.log('> ', m); return m; })
+  .map(messagePattern.exec.bind(messagePattern))
+  .filter(m => !!m)
+  .map(([_, nick, host, server, channel, message]) => [nick, message])
 
 class App extends Component {
   constructor() {
@@ -23,19 +22,22 @@ class App extends Component {
     this.state = { connected: false, messages: [] }
     this.handleMessage = this.handleMessage.bind(this)
   }
-  handleMessage(target, context, message, self) {
-    const { 'display-name': displayName } = context
+  handleMessage(messageObject) {
     this.setState(state => ({
       ...state,
-      messages: state.messages.concat([[displayName, message]]),
+      messages: state.messages.concat([messageObject]),
     }))
   }
   componentDidMount() {
-    const client = new tmi.client(opts)
-    client.on('connected', setConnected(true, this.setState.bind(this)))
-    client.on('message', this.handleMessage)
-    client.on('disconnected', setConnected(false, this.setState.bind(this)))
-    client.connect()
+    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443', 'irc')
+    ws.onopen = () => {
+      ws.send('PASS foobar')
+      ws.send('NICK justinfan123')
+      ws.send(`JOIN #${channel}`)
+      setConnected(true, this.setState.bind(this))()
+    }
+    ws.onmessage = e => decomposeEvent(e).map(this.handleMessage)
+    ws.onclose = setConnected(false, this.setState.bind(this))
   }
   componentDidUpdate() {
     if (overflow(this.element)) {
