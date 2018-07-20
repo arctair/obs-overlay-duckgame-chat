@@ -1,8 +1,4 @@
 export default {
-  clientId: '',
-  clientSecret: '',
   oauth: '',
-  gameId: 459841,
-  userId: 0,
-  userName: '',
+  channel: '',
 }

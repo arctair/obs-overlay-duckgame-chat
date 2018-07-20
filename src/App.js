@@ -4,13 +4,13 @@ import config from './config'
 import './App.css'
 import Message from './Message'
 
-const { userName, oauth } = config
+const { channel, oauth } = config
 const opts = {
   identity: {
     username: 'my_bot',
     password: `oauth:${oauth}`,
   },
-  channels: [ userName ]
+  channels: [ channel ]
 }
 
 const overflow = element => element.offsetHeight < element.scrollHeight
