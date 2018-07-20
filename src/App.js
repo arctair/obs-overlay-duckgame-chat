@@ -14,39 +14,34 @@ const opts = {
 }
 
 const overflow = element => element.offsetHeight < element.scrollHeight
+const setConnected = (connected, setState) => () =>
+  setState(state => ({ ...state, connected }))
 
 class App extends Component {
   constructor() {
     super()
-    this.state = {
-      connected: false,
-      messages: [],
-    }
+    this.state = { connected: false, messages: [] }
     this.handleMessage = this.handleMessage.bind(this)
   }
   handleMessage(target, context, message, self) {
-    console.log(target, context, message, self)
     const { 'display-name': displayName } = context
     this.setState(state => ({
       ...state,
-      messages: [
-        ...state.messages,
-        [displayName, message],
-      ],
+      messages: state.messages.concat([[displayName, message]]),
     }))
   }
   componentDidMount() {
     const client = new tmi.client(opts)
-    client.on('connected', () => this.setState(state => ({ ...state, connected: true })))
+    client.on('connected', setConnected(true, this.setState.bind(this)))
     client.on('message', this.handleMessage)
-    client.on('disconnected', () => this.setState(state => ({ ...state, connected: false })))
+    client.on('disconnected', setConnected(false, this.setState.bind(this)))
     client.connect()
   }
   componentDidUpdate() {
     if (overflow(this.element)) {
       this.setState(state => ({
         ...state,
-        messages: [ ...state.messages.slice(1), ],
+        messages: state.messages.slice(1),
       }))
     }
   }
@@ -57,7 +52,7 @@ class App extends Component {
         {messages.map(([displayName, message], i) => ({ displayName, message, i })).map(Message)}
         {connected && messages.length == 0 ?
           <Message displayName='Server' message='Chat connected!' /> :
-          !connected && <Message displayName='Server' message='Chat disconnected :<' i='-1' />}
+          !connected && <Message displayName='Server' message='Chat disconnected :<' />}
       </div>
     )
   }
