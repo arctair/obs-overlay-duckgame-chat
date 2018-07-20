@@ -8,6 +8,7 @@ Node v8.11.3
 ## Config
 Copy config.js.template to config.js. Fill out `channel` with your channel name.  
 Get an oauth token from https://twitchapps.com/tmi/ then put it in config.js's `oauth` field.  
+Grab all the duck game hats in PNG form and drop them into the src/hats holder.  
 
 ## Build and serve
 tmi.js is broken, so `cp -r node_modules/tmi.js src/`  
