@@ -4,12 +4,12 @@ import hats from './hats'
 import users from './users'
 
 const colors = ['white', 'grey', 'yellow', 'brown']
-const hatFrom = (displayName) => displayName in users ? hats[users[displayName]] : displayName in hats ? hats[displayName] : hats['defaultduck']
-const Message = ({ displayName, message, i }) => (
+const hatFrom = (nick) => nick in users ? hats[users[nick]] : nick in hats ? hats[nick] : hats['defaultduck']
+const Message = ({ nick = '?', message, i }) => (
   <div className='chat-msg' key={i}>
-    <span className={colors[hashString(displayName) % 4]}>
-      <img src={hatFrom(displayName.toLowerCase())} alt=''/>
-      <span className='chat-dn'>{displayName}: </span>
+    <span className={colors[hashString(nick) % 4]}>
+      <img src={hatFrom(nick.toLowerCase())} alt=''/>
+      <span className='chat-dn'>{nick}: </span>
       {message}
     </span>
   </div>

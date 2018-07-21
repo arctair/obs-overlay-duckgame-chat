@@ -9,12 +9,14 @@ const overflow = element => element.offsetHeight < element.scrollHeight
 const setConnected = (connected, setState) => () =>
   setState(state => ({ ...state, connected }))
 const messagePattern = new RegExp(`:(.*?)!(.*?)@(.*?) PRIVMSG (#${channel}) :(.*)`)
-const decomposeEvent = e => e.data
+const handlePing = (pong) => (message) => { if (message == 'PING :tmi.twitch.tv') { pong(); return false; }; return true; }
+const pipelineEvent = (e, pong) => e.data
   .split('\r\n')
   .map(m => { console.log('> ', m); return m; })
+  .filter(handlePing(pong))
   .map(messagePattern.exec.bind(messagePattern))
   .filter(m => !!m)
-  .map(([_, nick, host, server, channel, message]) => [nick, message])
+  .map(([_, nick, host, server, channel, message], i) => ({ nick, message, i }))
 
 class App extends Component {
   constructor() {
@@ -25,7 +27,7 @@ class App extends Component {
   handleMessage(messageObject) {
     this.setState(state => ({
       ...state,
-      messages: state.messages.concat([messageObject]),
+      messages: state.messages.concat(messageObject),
     }))
   }
   componentDidMount() {
@@ -37,7 +39,8 @@ class App extends Component {
         ws.send(`JOIN #${channel}`)
         setConnected(true, this.setState.bind(this))()
       }
-      ws.onmessage = e => decomposeEvent(e).map(this.handleMessage)
+      const pong = ws => () => ws.send('PONG :tmi.twitch.tv')
+      ws.onmessage = e => pipelineEvent(e, pong(ws)).map(this.handleMessage)
       ws.onclose = setConnected(false, this.setState.bind(this))
     }
   }
@@ -61,10 +64,10 @@ class App extends Component {
     }
     return (
       <div className='App' ref={(element) => {this.element = element}}>
-        {messages.map(([displayName, message], i) => ({ displayName, message, i })).map(Message)}
+        {messages.map(Message)}
         {connected && messages.length == 0 ?
-          <Message displayName='Server' message='Chat connected!' /> :
-          !connected && <Message displayName='Server' message='Chat disconnected :<' />}
+          <Message nick='Server' message='Chat connected!' /> :
+          !connected && <Message nick='Server' message='Chat disconnected :<' />}
       </div>
     )
   }
