@@ -1,51 +1,60 @@
 import React, { Component } from 'react';
 import './App.css'
 import Message from './Message'
-
-const channelMatch = RegExp('\\?channel=(.*)$').exec(window.location.href)
-const channel = channelMatch && channelMatch[1]
-
-const overflow = element => element.offsetHeight < element.scrollHeight
-const setConnected = (connected, setState) => () =>
-  setState(state => ({ ...state, connected }))
-const messagePattern = new RegExp(`:(.*?)!(.*?)@(.*?) PRIVMSG (#${channel}) :(.*)`)
-const handlePing = (pong) => (message) => { if (message == 'PING :tmi.twitch.tv') { pong(); return false; }; return true; }
-const pipelineEvent = (e, pong) => e.data
-  .split('\r\n')
-  .map(m => { console.log('> ', m); return m; })
-  .filter(handlePing(pong))
-  .map(messagePattern.exec.bind(messagePattern))
-  .filter(m => !!m)
-  .map(([_, nick, host, server, channel, message], i) => ({ nick, message, i }))
+const channelPattern = RegExp('\\?channel=(.*)$')
+const messagePattern = channel => RegExp(`:(.*?)!.*?@.*? PRIVMSG #${channel} :(.*)`)
 
 class App extends Component {
   constructor() {
     super()
-    this.state = { connected: false, messages: [] }
-    this.handleMessage = this.handleMessage.bind(this)
+    const channelMatch = channelPattern.exec(window.location.href)
+    this.state = {
+      connected: false,
+      messages: [],
+      channel: channelMatch && channelMatch[1]
+    }
+    this.onWsOpen = this.onWsOpen.bind(this)
+    this.onWsMessage = this.onWsMessage.bind(this)
+    this.onWsClose = this.onWsClose.bind(this)
   }
-  handleMessage(messageObject) {
+  onWsOpen() {
+    const { channel } = this.state
+    this.ws.send('PASS foobar')
+    this.ws.send('NICK justinfan123')
+    this.ws.send(`JOIN #${channel}`)
+    this.setState(state => ({ ...state, connected: true }))
+  }
+  onWsMessage(e) {
+    const { channel } = this.state
+    const lines = e.data.split('\r\n')
+    lines.forEach(line => console.log('> ', line))
+    lines.filter(line => line === 'PING :tmi.twitch.tv')
+      .forEach(() => this.ws.send('PONG :tmi.twitch.tv'))
+    const messages = lines
+      .map(line => messagePattern(channel).exec(line))
+      .filter(m => !!m)
+      .map(([_, nick, message], i) => ({ nick, message, i }))
     this.setState(state => ({
       ...state,
-      messages: state.messages.concat(messageObject),
+      messages: state.messages.concat(messages),
     }))
   }
+  onWsClose() {
+    this.setState(state => ({ ...state, connected: false }))
+  }
   componentDidMount() {
+    const { channel } = this.state
     if (channel) {
-      const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443', 'irc')
-      ws.onopen = () => {
-        ws.send('PASS foobar')
-        ws.send('NICK justinfan123')
-        ws.send(`JOIN #${channel}`)
-        setConnected(true, this.setState.bind(this))()
-      }
-      const pong = ws => () => ws.send('PONG :tmi.twitch.tv')
-      ws.onmessage = e => pipelineEvent(e, pong(ws)).map(this.handleMessage)
-      ws.onclose = setConnected(false, this.setState.bind(this))
+      this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443', 'irc')
+      this.ws.onopen = this.onWsOpen
+      this.ws.onmessage = this.onWsMessage
+      this.ws.onclose = this.onWsClose
     }
   }
   componentDidUpdate() {
-    if (overflow(this.element)) {
+    // if App is overflowing
+    if (this.element.offsetHeight < this.element.scrollHeight) {
+      // remove the oldest message in state
       this.setState(state => ({
         ...state,
         messages: state.messages.slice(1),
@@ -53,21 +62,21 @@ class App extends Component {
     }
   }
   render() {
-    const { connected, messages } = this.state
-    if (!channel) {
-      return (
-        <div className='App'>
-          <p>Please specify a channel in the URL parameters</p>
-          <p>For example, <a href='?channel=krispykitty'>{window.location.href}?channel=krispykitty</a></p>
-        </div>
-      )
-    }
+    const { connected, messages, channel } = this.state
     return (
-      <div className='App' ref={(element) => {this.element = element}}>
-        {messages.map(Message)}
-        {connected && messages.length == 0 ?
+      <div className='App' ref={element => this.element = element}>
+        {
+          !channel ?
+          <React.Fragment>
+            <p>Please specify a channel in the URL parameters</p>
+            <p>For example, <a href='?channel=krispykitty'>{window.location.href}?channel=krispykitty</a></p>
+          </React.Fragment> :
+          !connected ?
+          <Message nick='Server' message='Chat disconnected :<' /> :
+          !messages.length ?
           <Message nick='Server' message='Chat connected!' /> :
-          !connected && <Message nick='Server' message='Chat disconnected :<' />}
+          messages.map(Message)
+        }
       </div>
     )
   }
