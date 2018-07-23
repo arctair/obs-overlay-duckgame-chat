@@ -33,7 +33,7 @@ class App extends Component {
     const messages = lines
       .map(line => messagePattern(channel).exec(line))
       .filter(m => !!m)
-      .map(([_, nick, message], i) => ({ nick, message, i }))
+      .map(([_, nick, message]) => ({ nick, message }))
     this.setState(state => ({
       ...state,
       messages: state.messages.concat(messages),
