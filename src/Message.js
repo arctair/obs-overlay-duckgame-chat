@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import hashString from 'string-hash'
 import hats from './hats'
 import users from './users'
@@ -14,5 +15,10 @@ const Message = ({ nick = '?', message }, key) => (
     </span>
   </div>
 )
+
+Message.propTypes = {
+  nick: PropTypes.string,
+  message: PropTypes.string,
+}
 
 export default Message

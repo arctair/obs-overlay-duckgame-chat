@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import './App.css'
 import Message from './Message'
 
@@ -30,6 +31,13 @@ class App extends Component {
   isOverflowing() {
     return this.element.offsetHeight < this.element.scrollHeight
   }
+}
+
+App.propTypes = {
+  connected: PropTypes.bool.isRequired,
+  messages: PropTypes.arrayOf(PropTypes.object).isRequired,
+  channel: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]).isRequired,
+  onOverflow: PropTypes.func.isRequired,
 }
 
 export default App

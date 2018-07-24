@@ -3,17 +3,16 @@ import App from './App'
 const channelPattern = RegExp('\\?channel=(.*)$')
 const messagePattern = channel => RegExp(`:(.*?)!.*?@.*? PRIVMSG #${channel} :(.*)`)
 
+const initialState = channel => ({
+  connected: false,
+  messages: [],
+  channel,
+})
+
 class AppContainer extends Component {
   constructor() {
     super()
-    this.initializeState()
-  }
-  initializeState() {
-    this.state = {
-      connected: false,
-      messages: [],
-      channel: this.getChannelFromQueryParams(),
-    }
+    this.state = initialState(this.getChannelFromQueryParams())
   }
   getChannelFromQueryParams() {
     const channelMatch = channelPattern.exec(window.location.href)
