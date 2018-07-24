@@ -17,31 +17,6 @@ class App extends Component {
     this.onWsMessage = this.onWsMessage.bind(this)
     this.onWsClose = this.onWsClose.bind(this)
   }
-  onWsOpen() {
-    const { channel } = this.state
-    this.ws.send('PASS foobar')
-    this.ws.send('NICK justinfan123')
-    this.ws.send(`JOIN #${channel}`)
-    this.setState(state => ({ ...state, connected: true }))
-  }
-  onWsMessage(e) {
-    const { channel } = this.state
-    const lines = e.data.split('\r\n')
-    lines.forEach(line => console.log('> ', line))
-    lines.filter(line => line === 'PING :tmi.twitch.tv')
-      .forEach(() => this.ws.send('PONG :tmi.twitch.tv'))
-    const messages = lines
-      .map(line => messagePattern(channel).exec(line))
-      .filter(m => !!m)
-      .map(([_, nick, message]) => ({ nick, message }))
-    this.setState(state => ({
-      ...state,
-      messages: state.messages.concat(messages),
-    }))
-  }
-  onWsClose() {
-    this.setState(state => ({ ...state, connected: false }))
-  }
   componentDidMount() {
     const { channel } = this.state
     if (channel) {
@@ -51,15 +26,58 @@ class App extends Component {
       this.ws.onclose = this.onWsClose
     }
   }
+  onWsOpen() {
+    const { channel } = this.state
+    this.ws.send('PASS foobar')
+    this.ws.send('NICK justinfan123')
+    this.ws.send(`JOIN #${channel}`)
+    this.setState(state => ({ ...state, connected: true }))
+  }
+  onWsMessage({ data }) {
+    const { channel } = this.state
+    const lines = data.split('\r\n')
+    this.printLines(lines)
+    this.handlePing(lines)
+    this.updateMessageState(lines)
+  }
+  printLines(lines) {
+    lines.forEach(line => console.log('<', line))
+  }
+  handlePing(lines) {
+    lines
+      .filter(line => line === 'PING :tmi.twitch.tv')
+      .forEach(() => {
+        this.ws.send('PONG :tmi.twitch.tv')
+        console.log('>', 'PONG :tmi.twitch.tv')
+      })
+  }
+  updateMessageState(lines) {
+    this.setState(state => ({
+      ...state,
+      messages: state.messages.concat(this.messagesFromLines(lines)),
+    }))
+  }
+  messagesFromLines(lines) {
+    return lines
+      .map(line => messagePattern(channel).exec(line))
+      .filter(m => !!m)
+      .map(([_, nick, message]) => ({ nick, message }))
+  }
+  onWsClose() {
+    this.setState(state => ({ ...state, connected: false }))
+  }
   componentDidUpdate() {
-    // if App is overflowing
-    if (this.element.offsetHeight < this.element.scrollHeight) {
-      // remove the oldest message in state
-      this.setState(state => ({
-        ...state,
-        messages: state.messages.slice(1),
-      }))
-    }
+    if (this.isOverflowing())
+      this.removeOldestMessage()
+  }
+  isOverflowing() {
+    return this.element.offsetHeight < this.element.scrollHeight
+  }
+  removeOldestMessage() {
+    this.setState(state => ({
+      ...state,
+      messages: state.messages.slice(1),
+    }))
   }
   render() {
     const { connected, messages, channel } = this.state
