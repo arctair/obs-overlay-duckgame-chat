@@ -6,24 +6,26 @@ const messagePattern = channel => RegExp(`:(.*?)!.*?@.*? PRIVMSG #${channel} :(.
 class AppContainer extends Component {
   constructor() {
     super()
-    const channelMatch = channelPattern.exec(window.location.href)
+    this.initializeState()
+  }
+  initializeState() {
     this.state = {
       connected: false,
       messages: [],
-      channel: channelMatch && channelMatch[1],
+      channel: this.getChannelFromQueryParams(),
     }
-    this.onWsOpen = this.onWsOpen.bind(this)
-    this.onWsMessage = this.onWsMessage.bind(this)
-    this.onWsClose = this.onWsClose.bind(this)
-    this.removeOldestMessage = this.removeOldestMessage.bind(this)
+  }
+  getChannelFromQueryParams() {
+    const channelMatch = channelPattern.exec(window.location.href)
+    return channelMatch && channelMatch[1]
   }
   componentDidMount() {
     const { channel } = this.state
     if (channel) {
       this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443', 'irc')
-      this.ws.onopen = this.onWsOpen
-      this.ws.onmessage = this.onWsMessage
-      this.ws.onclose = this.onWsClose
+      this.ws.onopen = this.onWsOpen.bind(this)
+      this.ws.onmessage = this.onWsMessage.bind(this)
+      this.ws.onclose = this.onWsClose.bind(this)
     }
   }
   onWsOpen() {
@@ -72,7 +74,7 @@ class AppContainer extends Component {
       connected={connected}
       messages={messages}
       channel={channel}
-      onOverflow={this.removeOldestMessage} />
+      onOverflow={this.removeOldestMessage.bind(this)} />
   }
   removeOldestMessage() {
     this.setState(state => ({
