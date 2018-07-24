@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import hashString from 'string-hash'
 import hats from './hats'
 import users from './users'
